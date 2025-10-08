@@ -8,7 +8,7 @@ const mUsuario = require('../models/userModel');
 exports.mostrarRegistro = (req, res) => {
     // MODIFICACIÓN: La vista ahora es 'auth/register' para que busque register.hbs
     res.render('auth/register', {
-        layout: 'main', // Usar el layout para páginas de autenticación
+        layout: 'public', // Usar el layout para páginas de autenticación
         titulo: 'Registro de Usuario'
     });
 };
@@ -60,7 +60,7 @@ exports.registrarUsuario = async (req, res) => {
 exports.mostrarLogin = (req, res) => {
     // Si tu archivo es login.hbs, 'auth/login' es correcto.
     res.render('auth/login', {
-        layout: 'main', // Usar el layout para páginas de autenticación
+        layout: 'public', // Usar el layout para páginas de autenticación
         titulo: 'Inicio de Sesión'
     });
 };

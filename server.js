@@ -66,6 +66,8 @@ app.use((req, res, next) => {
     next();
 });
 
+app.use(express.static(__dirname + "/assets")); 
+
 
 // ------------------------ IMPORTACION Y USO DE RUTAS -------------------------
 const indexRoutes = require('./routes/routes'); 
