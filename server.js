@@ -12,7 +12,8 @@ require('dotenv').config();
 const helpers_util = require('handlebars-helpers')();
 const { create } = require('express-handlebars');
 require('./config/passport');
-require('./models/associations');
+// Importamos la función setupAssociations para ejecutarla
+const setupAssociations = require('./models/associations'); // <--- CAMBIO CLAVE: Importamos la función
 // 🚨 Importamos la lógica de conexión y sincronización de DB
 const { con_sequelize, ensureDatabase } = require('./database/connection_mysql_db');
 
@@ -117,7 +118,10 @@ const startServer = async () => {
     try {
         await ensureDatabase();
 
-        
+        // 🚨 EJECUTAR ASOCIACIONES ANTES DE LA SINCRONIZACIÓN 🚨
+        setupAssociations(); // <--- Nueva línea para configurar las relaciones
+
+        // Sincronizar la DB: alter: true actualiza las claves foráneas si es necesario
         await con_sequelize.sync({ alter: true }); 
 
         console.log("Base de datos y tablas sincronizadas correctamente.");
@@ -132,4 +136,3 @@ const startServer = async () => {
 };
 
 startServer();
-

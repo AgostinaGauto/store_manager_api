@@ -9,60 +9,74 @@ const Producto = require('./productModel');
 const Pedido = require('./orderModel');
 const DetallePedido = require('./orderDetailModel');
 
-// ------------------- RELACIONES EXISTENTES -------------------
+// ------------------- FUNCIÓN DE CONFIGURACIÓN -------------------
 
-// Relación 1:N entre Categoria y Producto
-// Una Categoria puede tener muchos Productos (1:N)
-Categoria.hasMany(Producto, {
-    foreignKey: {
-        name: 'categoriaId',
-        allowNull: false
-    }
-});
-Producto.belongsTo(Categoria, {
-    foreignKey: 'categoriaId'
-});
+const setupAssociations = () => {
 
+    // ------------------- RELACIONES EXISTENTES -------------------
 
-// ------------------- NUEVAS RELACIONES DE PEDIDOS -------------------
-
-// 1. Relación Usuario <-> Pedido (1:N)
-// Un Usuario puede tener muchos Pedidos (1:N)
-Usuario.hasMany(Pedido, {
-    foreignKey: {
-        name: 'usuarioId',
-        allowNull: false
-    }
-});
-Pedido.belongsTo(Usuario, {
-    foreignKey: 'usuarioId'
-});
-
-// 2. Relación Pedido <-> Producto (N:M a través de DetallePedido)
-// Un Pedido tiene muchos Productos a través de DetallePedido
-Pedido.belongsToMany(Producto, {
-    through: DetallePedido,
-    foreignKey: 'pedidoId'
-});
-Producto.belongsToMany(Pedido, {
-    through: DetallePedido,
-    foreignKey: 'productoId'
-});
-
-// 3. Relaciones directas para DetallePedido (para facilitar consultas)
-// DetallePedido pertenece a un Pedido y a un Producto
-DetallePedido.belongsTo(Pedido, { foreignKey: 'pedidoId' });
-DetallePedido.belongsTo(Producto, { foreignKey: 'productoId' });
+    // Relación 1:N entre Categoria y Producto
+    Categoria.hasMany(Producto, {
+        foreignKey: {
+            name: 'categoriaId',
+            allowNull: false
+        }
+    });
+    Producto.belongsTo(Categoria, {
+        foreignKey: 'categoriaId'
+    });
 
 
-// ------------------- EXPORTACIÓN DE MODELOS -------------------
-// (No se necesita exportar si solo se llama en server.js, pero es buena práctica)
-// module.exports = { Usuario, Categoria, Producto, Pedido, DetallePedido };
+    // ------------------- NUEVAS RELACIONES DE PEDIDOS -------------------
+
+    // 1. Relación Usuario <-> Pedido (1:N)
+    // Un Usuario puede tener muchos Pedidos (1:N)
+    Usuario.hasMany(Pedido, {
+        foreignKey: {
+            name: 'usuarioId',
+            allowNull: false
+        }
+    });
+    Pedido.belongsTo(Usuario, {
+        foreignKey: 'usuarioId'
+    });
+
+    // 2. Relación Pedido <-> DetallePedido (1:N)
+    // Esta es la clave para que funcione el 'include' del controlador.
+    Pedido.hasMany(DetallePedido, { 
+        foreignKey: 'pedidoId',
+        // Opcional, pero define el alias para la consulta:
+        as: 'DetallePedidos' 
+    });
+    DetallePedido.belongsTo(Pedido, { 
+        foreignKey: 'pedidoId' 
+    });
+    
+    // 3. Relación Producto <-> DetallePedido (1:N)
+    // Esta es la clave para que el Detalle sepa qué Producto mostrar.
+    Producto.hasMany(DetallePedido, { 
+        foreignKey: 'productoId', 
+        as: 'detalles_producto'
+    });
+    DetallePedido.belongsTo(Producto, { 
+        foreignKey: 'productoId' 
+    });
 
 
-module.exports = {
-    Usuario,
-    Categoria,
-    Producto
-    // Exporta otros modelos aquí en el futuro
+    // ------------------- RELACIONES N:M (Opcionales si usas las 1:N arriba) -------------------
+    /* Si usas las hasMany/belongsTo arriba, las belongsToMany no son estrictamente necesarias
+       para la consulta del detalle, pero las dejaré comentadas para referencia.
+    Pedido.belongsToMany(Producto, {
+        through: DetallePedido,
+        foreignKey: 'pedidoId'
+    });
+    Producto.belongsToMany(Pedido, {
+        through: DetallePedido,
+        foreignKey: 'productoId'
+    });
+    */
+
+    console.log("Asociaciones de modelos configuradas correctamente.");
 };
+
+module.exports = setupAssociations;

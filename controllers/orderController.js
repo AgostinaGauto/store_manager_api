@@ -1,29 +1,28 @@
 // controllers/orderController.js
 
-const Pedido = require('../models/orderModel'); // Asegúrate de tener el modelo Pedido importado
-// const DetallePedido = require('../models/orderDetailModel'); // Podrías necesitar esto más adelante
+const Pedido = require('../models/orderModel'); 
+const DetallePedido = require('../models/orderDetailModel'); 
+const Producto = require('../models/productModel'); 
+const Usuario = require('../models/userModel'); 
+const { Op } = require('sequelize'); // Solo si necesitas operadores complejos, lo dejamos por si acaso.
 
 /**
  * Muestra el historial de pedidos del usuario.
  */
 const viewOrders = async (req, res) => {
     // 🚨 NOTA: Se asume que el usuario está autenticado (req.user existe) 
-    // y la compra en el checkout ya verificó esto.
+    const userId = req.user.id; // Obtenemos el ID del usuario logueado
 
     try {
-        const userId = req.user.id; // Obtenemos el ID del usuario logueado
-
         // Buscamos todos los pedidos del usuario
         const pedidos = await Pedido.findAll({
             where: { usuarioId: userId },
             order: [['createdAt', 'DESC']] // Ordenamos del más reciente al más antiguo
-            // Incluir el modelo de DetallePedido para obtener los ítems del pedido sería ideal aquí
         });
 
         res.render('orders/viewOrders', { 
             titulo: 'Historial de Pedidos',
             pedidos: pedidos,
-            // Aquí puedes añadir lógica de formato si es necesario, pero es mejor hacerlo en la vista.
         });
 
     } catch (error) {
@@ -34,6 +33,57 @@ const viewOrders = async (req, res) => {
     }
 };
 
+/**
+ * Muestra el detalle de un pedido específico.
+ */
+const viewOrderDetail = async (req, res) => {
+    const pedidoId = req.params.id;
+    const userId = req.user.id; // Para asegurar que solo vea sus propios pedidos
+
+    try {
+        const pedido = await Pedido.findOne({
+            where: { 
+                id: pedidoId,
+                usuarioId: userId // Importante: Seguridad
+            },
+            include: [
+                {
+                    model: DetallePedido,
+                    // Usamos el alias 'DetallePedidos' definido en models/associations.js
+                    as: 'DetallePedidos', 
+                    include: [
+                        { model: Producto, attributes: ['nombre'] } // Incluimos el nombre del producto
+                    ]
+                },
+                {
+                    model: Usuario,
+                    // ✅ CORRECCIÓN FINAL: Usamos 'nombre' ya que es el nombre de la columna en la tabla 'usuarios'.
+                    attributes: ['id', 'nombre', 'apellido'] // Agregamos 'apellido' para más detalle si es necesario
+                }
+            ]
+        });
+
+        if (!pedido) {
+            req.flash('varMensaje', 'Pedido no encontrado o no autorizado.');
+            req.flash('varEstiloMensaje', 'alert-warning');
+            return res.redirect('/pedidos');
+        }
+
+        res.render('orders/orderDetail', {
+            titulo: `Detalle Pedido #${pedido.id}`,
+            pedido: pedido.toJSON() // Convertimos a JSON para trabajar mejor en Handlebars
+        });
+
+    } catch (error) {
+        console.error("Error al mostrar el detalle del pedido:", error);
+        req.flash('varMensaje', 'Error al cargar el detalle del pedido.');
+        req.flash('varEstiloMensaje', 'alert-danger');
+        res.redirect('/pedidos');
+    }
+};
+
+
 module.exports = {
-    viewOrders
+    viewOrders,
+    viewOrderDetail // Exportamos la nueva función
 };
