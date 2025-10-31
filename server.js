@@ -1,32 +1,61 @@
-// El modulo de express nos permitira crear servidores web
-// manejar solicitudes HTTP, y responder a los clientes que se conecten al servidor
+// server.js
 
 //------------------------- LIBRERIAS/MODULOS---------------------------------
-const express = require('express'); //Importamos el modulo de express
+const express = require('express');
 const app = express();
-const session = require('express-session'); //Importamos el modulo de express-session
-const flash = require('connect-flash'); // Importamos el modulo de connect-flash
-const passport = require('passport'); // Importamos Passport (necesario para inicializar)
+const session = require('express-session');
+const path = require('path');
+const flash = require('connect-flash');
+const passport = require('passport');
 require('dotenv').config();
+// 🚨 CORRECCIÓN: Importamos los helpers utilitarios con otro nombre para evitar conflicto
+const helpers_util = require('handlebars-helpers')();
 const { create } = require('express-handlebars');
-require('./config/passport'); // Ejecuta la configuración de la estrategia local
-
+require('./config/passport');
+require('./models/associations');
 // 🚨 Importamos la lógica de conexión y sincronización de DB
 const { con_sequelize, ensureDatabase } = require('./database/connection_mysql_db');
 
 
 //-------------------------- HANDLEBARS --------------------------------------
-// Main sera mi plantilla base y usara la vista home
 
 const hbs = create({
     extname: '.hbs',
     defaultLayout: 'main',
     layoutsDir: 'views/layouts',
-    // 💡 SOLUCIÓN al error de partials: Aseguramos la ruta
-    partialsDir: 'views/partials', 
-    helpers: { 
+    partialsDir: 'views/partials',
+
+    runtimeOptions: {
+        allowProtoPropertiesByDefault: true,
+        allowProtoMethodsByDefault: true
+    },
+
+    // 🚨 CLAVE: Fusionamos todos los helpers instalados con los custom
+    helpers: {
+        ...helpers_util, // Incluye todos los helpers
+        
+        // Mantenemos el custom 'eq' si quieres sobreescribir el comportamiento
         eq: function (a, b) {
             return a === b;
+        },
+
+        Acceso: function (rolUsuario, nivelRequerido, options) {
+            if (!options || typeof options.fn !== 'function') {
+                return '';
+            }
+
+            const rol = parseInt(rolUsuario);
+            const requerido = parseInt(nivelRequerido);
+
+            if (rol >= requerido) {
+                return options.fn(this);
+            }
+
+            // Solo llama a options.inverse si existe
+            if (options.inverse && typeof options.inverse === 'function') {
+                return options.inverse(this);
+            }
+            return '';
         }
     }
 });
@@ -45,7 +74,7 @@ app.use(express.json());
 
 // 3. Configuración de Sesiones (Necesario para Passport y Flash)
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'clave_secreta_segura', // Usar una variable de entorno segura
+    secret: process.env.SESSION_SECRET || 'clave_secreta_segura',
     resave: false,
     saveUninitialized: false
 }));
@@ -55,48 +84,52 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // 5. Middleware de Mensajes Flash (debe ir DESPUÉS de la sesión)
-app.use(flash()); 
+app.use(flash());
 
 // 6. Middleware para hacer accesibles los mensajes flash y el usuario a las vistas (res.locals)
 app.use((req, res, next) => {
-    // Estas variables son las que se usan en el controlador y en el partial 'messages.hbs'
     res.locals.varMensaje = req.flash('varMensaje');
     res.locals.varEstiloMensaje = req.flash('varEstiloMensaje');
-    res.locals.user = req.user || null; // El usuario logueado
+    res.locals.user = req.user || null;
     next();
 });
 
-app.use(express.static(__dirname + "/assets")); 
+// Middleware para servir archivos estáticos (Assets)
+app.use(express.static(__dirname + "/assets"));
+
+app.use(express.static(path.join(__dirname, 'public')));
 
 
 // ------------------------ IMPORTACION Y USO DE RUTAS -------------------------
-const indexRoutes = require('./routes/routes'); 
-app.use('/', indexRoutes); // Conecta las rutas a la URL raíz
+// NOTA IMPORTANTE: Se asume que todas las rutas no específicas (Carrito, Auth) están en indexRoutes.
+const indexRoutes = require('./routes/routes');
+
+// Se importa SÓLO la nueva ruta de Pedidos, que es lo que necesitamos.
+const orderRoutes = require('./routes/orderRoutes'); 
+
+app.use('/', indexRoutes); 
+app.use('/', orderRoutes); // Registro de rutas de Pedidos
 
 
 // ----------------------- INICIO Y SINCRONIZACIÓN DE DB -----------------------
 
-// Función asíncrona para asegurar la DB y luego iniciar el servidor
 const startServer = async () => {
     try {
-        // 1. Asegurar que la Base de Datos exista (CREATE DATABASE IF NOT EXISTS)
-        await ensureDatabase(); 
+        await ensureDatabase();
 
-        // 2. Sincronizar modelos con la DB (Crea la tabla 'usuarios' si no existe)
-        // { alter: true } modifica la tabla sin borrar datos si cambias el modelo
-        await con_sequelize.sync({ alter: true }); 
         
+        await con_sequelize.sync({ alter: true }); 
+
         console.log("Base de datos y tablas sincronizadas correctamente.");
 
-        // 3. Iniciar el servidor de Express SÓLO si la DB está lista
         app.listen(process.env.PORT, () => {
             console.log(`Servidor corriendo en el puerto: ${process.env.PORT}`);
         });
 
     } catch (error) {
-        console.error("🚫 Error fatal al iniciar la aplicación o DB:", error);
+        console.error("Error fatal al iniciar la aplicación o DB:", error);
     }
 };
 
-startServer(); // Llamamos a la función para arrancar todo
+startServer();
 

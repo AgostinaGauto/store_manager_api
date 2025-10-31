@@ -8,9 +8,51 @@ aplicando un control de acceso básico basado en la autenticación del usuario.
 
 const express = require('express');
 const router = express.Router();
+const cartController = require('../controllers/cartController');
+const Producto = require('../models/productModel');
+
+// ----------------- Rutas del Carrito -----------------
+
+// Ruta para mostrar el catálogo
+router.get('/catalogo', async (req, res) => {
+    try {
+        const productos = await Producto.findAll({
+            // Solo trae la información necesaria para el catálogo
+            attributes: ['id', 'nombre', 'precio', 'imagen'] 
+        });
+        res.render('catalog/catalog', { 
+            titulo: 'Catálogo de Productos',
+            productos: productos 
+        });
+    } catch (error) {
+        console.error("Error al cargar el catálogo:", error);
+        res.render('catalogo/catalogo', { titulo: 'Catálogo de Productos', productos: [] });
+    }
+});
+
+// Ruta para ver el carrito
+router.get('/carrito', cartController.viewCart);
+
+// Ruta para agregar un producto (usualmente un POST desde el catálogo)
+router.post('/carrito/add', cartController.addToCart);
+
+// Ruta para eliminar un producto (usualmente un POST o DELETE con un formulario)
+router.post('/carrito/remove/:id', cartController.removeFromCart);
+
+// 🚨 RUTA DE CHECKOUT 🚨
+// Debe ser POST para procesar la transacción
+router.post('/checkout', cartController.checkout);
+
+//------------------------------------------------------
 
 // Carga las rutas de AUTENTICACIÓN/USUARIO
 router.use('/', require('./userRoutes')); 
+
+//  Carga las rutas de GESTIÓN DE CATEGORÍAS 
+router.use('/categorias', require('./categoryRoutes'));
+
+// Carga las rutas de GESTIÓN DE PRODUCTOS 
+router.use('/productos', require('./productRoutes')); 
 
 
 // Ruta de prueba

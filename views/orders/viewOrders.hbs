@@ -1,0 +1,41 @@
+<div class="container my-5">
+    <h2 class="mb-4">{{titulo}}</h2>
+    
+    {{> messages}}
+    
+    {{#if pedidos.length}}
+    <div class="card shadow-lg p-4">
+        <h5 class="card-title">Listado de Pedidos Realizados</h5>
+        
+        <table class="table table-striped align-middle mt-3">
+            <thead>
+                <tr>
+                    <th>N° Pedido</th>
+                    <th>Fecha</th>
+                    <th>Total</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each pedidos}}
+                <tr>
+                    <td>{{this.id}}</td>
+                    {{! Formatear la fecha si es necesario. Por simplicidad, se muestra como cadena }}
+                    <td>{{this.createdAt}}</td> 
+                    <td>${{this.total}}</td>
+                    <td><span class="badge bg-success">Completado</span></td>
+                    <td>
+                        <a href="/pedidos/{{this.id}}" class="btn btn-sm btn-info text-white">Ver Detalles</a>
+                    </td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+    {{else}}
+    <div class="alert alert-info text-center">
+        Aún no has realizado ningún pedido. ¡Empieza a comprar en nuestro <a href="/catalogo">catálogo</a>!
+    </div>
+    {{/if}}
+</div>

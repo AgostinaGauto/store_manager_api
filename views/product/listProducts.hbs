@@ -1,0 +1,81 @@
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">{{titulo}}</h2>
+        
+        {{! Parcial para mostrar mensajes flash de error o éxito }}
+        {{> messages}}
+
+        <div class="d-flex justify-content-between mb-3">
+            <a href="/productos/crear" class="btn btn-primary">
+                <i class="bi bi-plus-circle-fill"></i> Nuevo Producto
+            </a>
+            
+            {{! Aquí irá el buscador y paginación en el futuro }}
+        </div>
+
+        {{#if productos}}
+        <div class="card shadow">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">Imagen</th>
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Categoría</th>
+                                <th scope="col">Precio</th>
+                                <th scope="col" class="text-center">Stock</th>
+                                <th scope="col" class="text-center">Stock Mín.</th>
+                                <th scope="col" class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{#each productos}}
+                            <tr>
+                                <th scope="row">{{this.id}}</th>
+                                <td style="width: 80px;">
+                                    {{! Muestra la imagen, usa un placeholder si no existe }}
+                                    <img src="/uploads/products/{{this.imagen}}" 
+                                        alt="{{this.nombre}}" 
+                                        class="img-fluid rounded" 
+                                        style="max-height: 50px; object-fit: cover;">
+                                </td>
+                                <td>{{this.nombre}}</td>
+                                <td>{{this.categoria.nombre}}</td> {{  Acceso a la asociación de Sequelize  }}
+                                <td>${{this.precio}}</td>
+                                <td class="text-center">
+                                    {{! Resalta el stock bajo si es menor o igual al stock mínimo }}
+                                    {{#if (eq this.stock this.stock_minimo)}}
+                                        <span class="badge bg-warning">{{this.stock}}</span>
+                                    {{else if (lt this.stock this.stock_minimo)}}
+                                        <span class="badge bg-danger">{{this.stock}}</span>
+                                    {{else}}
+                                        <span class="badge bg-success">{{this.stock}}</span>
+                                    {{/if}}
+                                </td>
+                                <td class="text-center">{{this.stock_minimo}}</td>
+                                <td class="text-center">
+                                    <a href="/productos/editar/{{this.id}}" class="btn btn-sm btn-info text-white me-2" title="Editar">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form action="/productos/eliminar/{{this.id}}" method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-danger" title="Eliminar" onclick="return confirm('¿Está seguro de eliminar el producto {{this.nombre}}?');">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {{/each}}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {{else}}
+        <div class="alert alert-info">
+            No hay productos registrados. ¡Crea el primero!
+        </div>
+        {{/if}}
+    </div>
+</div>

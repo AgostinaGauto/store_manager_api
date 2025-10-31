@@ -1,0 +1,26 @@
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h2 class="mb-4">{{titulo}}</h2>
+
+        {{> messages}}
+        
+        <div class="card shadow-lg p-4">
+            <form action="/categorias/crear" method="POST">
+                <div class="mb-3">
+                    <label for="nombre" class="form-label">Nombre de la Categoría</label>
+                    <input type="text" class="form-control" id="nombre" name="nombre" value="{{nombre}}" required>
+                    <div class="form-text">Ej: Electrónica, Ropa de Caballero, Hogar.</div>
+                </div>
+                
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="/categorias" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver al Listado
+                    </a>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i> Guardar Categoría
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

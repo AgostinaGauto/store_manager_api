@@ -1,0 +1,26 @@
+{{! views/catalogo/catalogo.hbs (Fragmento para un solo producto) }}
+
+{{#each productos}}
+<div class="col-md-4 mb-4">
+    <div class="card h-100 shadow">
+        {{! Usar la ruta estática para la imagen }}
+        <img src="/uploads/products/{{this.imagen}}" class="card-img-top" alt="{{this.nombre}}" style="height: 200px; object-fit: cover;">
+        <div class="card-body">
+            <h5 class="card-title">{{this.nombre}}</h5>
+            <p class="card-text">${{this.precio}}</p>
+            
+            {{! 🚨 FORMULARIO DE AGREGAR AL CARRITO 🚨 }}
+            <form action="/carrito/add" method="POST">
+                <input type="hidden" name="id" value="{{this.id}}">
+                {{! Nota: Si quieres cantidad, agrega un input type="number" aquí }}
+                <input type="hidden" name="cantidad" value="1"> 
+                
+                <button type="submit" class="btn btn-primary btn-sm d-block w-100">
+                    <i class="bi bi-cart-plus"></i> Añadir al Carrito
+                </button>
+            </form>
+            
+        </div>
+    </div>
+</div>
+{{/each}}

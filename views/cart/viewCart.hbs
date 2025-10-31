@@ -1,0 +1,65 @@
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <h2 class="mb-4">{{titulo}}</h2>
+
+        {{> messages}}
+
+        {{#if cart.length}}
+        <div class="card shadow-lg p-4">
+            <h5 class="card-title">Resumen del Pedido</h5>
+            <table class="table table-striped align-middle mt-3">
+                <thead>
+                    <tr>
+                        <th>ID Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario</th>
+                        <th>Subtotal</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each cart}}
+                    <tr>
+                        <td>{{this.id}}</td>
+                        <td>{{this.cantidad}}</td>
+                        <td>${{this.precio}}</td>
+                        {{! CORRECCIÓN CLAVE: Usamos 'subtotal' que ya fue calculado en el controlador }}
+                        <td>${{this.subtotal}}</td>
+                        <td>
+                            <form action="/carrito/remove/{{this.id}}" method="POST" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-danger"
+                                    onclick="return confirm('¿Eliminar este producto del carrito?');">
+                                    <i class="bi bi-trash"></i> Eliminar
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+
+            {{! Lógica simple de total. Usamos la variable 'total' que se calcula en el controlador }}
+            {{! He modificado esta sección para usar la variable 'total' que ya pasas desde el controlador. }}
+            <div class="text-end fw-bold fs-5 mt-3">
+                Total del Carrito: ${{total}}
+            </div>
+
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                <a href="/catalogo" class="btn btn-secondary me-md-2">Seguir Comprando</a>
+
+                {{! 🚨 CAMBIO: Botón de Checkout dentro de un formulario POST 🚨 }}
+                <form action="/checkout" method="POST">
+                    <button type="submit" class="btn btn-success">Finalizar Compra</button>
+                </form>
+            </div>
+        </div>
+        {{else}}
+        <div class="alert alert-warning text-center">
+            Su carrito está vacío. ¡Explore nuestro <a href="/catalogo">catálogo</a>!
+        </div>
+        {{/if}}
+    </div>
+
+
+</div>
